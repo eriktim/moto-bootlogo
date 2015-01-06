@@ -1,6 +1,7 @@
 #ifndef BINFILE_H
 #define BINFILE_H
 
+#include <fstream>
 #include <list>
 #include <string>
 
@@ -15,12 +16,16 @@ class BinFile
 {
 public:
     BinFile(string filename);
-    list<BinImage> getImages(void);
-    void replaceImage(string type, string filename);
-    void resetUnlockedLogo(void);
+    ~BinFile();
+    list<BinImage> get_images(void);
+    void replace_image(string type, string filename);
+    void reset_unlocked_logo(void);
 
 private:
+    void _parse_headers(void);
+
     std::string _filename;
+    fstream _file;
     list<BinHeader> _headers;
     int _count;
 };
