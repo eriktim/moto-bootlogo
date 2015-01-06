@@ -1,6 +1,6 @@
 #include "BinImage.h"
 
-BinImage::BinImage(int size, char *data)
+BinImage::BinImage(char *data, int size)
 {
     _size = size;
     _data = data;

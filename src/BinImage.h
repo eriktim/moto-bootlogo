@@ -6,7 +6,7 @@ using namespace std;
 class BinImage
 {
 public:
-    BinImage(int size, char *data);
+    BinImage(char *data, int size);
 
 private:
     int _size;

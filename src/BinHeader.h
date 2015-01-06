@@ -11,12 +11,12 @@ class BinFile;
 class BinHeader
 {
 public:
-    BinHeader(int offset, int size, BinFile *file);
+    BinHeader(int offset, int size, BinImage *image);
+    BinImage *get_image(void);
 
 private:
     int _offset;
     int _size;
-    BinFile *_file;
     BinImage *_image;
 };
 

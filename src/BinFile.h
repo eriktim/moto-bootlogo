@@ -22,7 +22,8 @@ public:
     void reset_unlocked_logo(void);
 
 private:
-    void _parse_headers(void);
+    unsigned int _read_value(void);
+    void _parse_header(void);
 
     std::string _filename;
     fstream _file;

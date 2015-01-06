@@ -1,9 +1,13 @@
 #include "BinHeader.h"
 
-BinHeader::BinHeader(int offset, int size, BinFile *file)
+BinHeader::BinHeader(int offset, int size, BinImage *image)
 {
     _offset = offset;
     _size = size;
-    _file = file;
-    _image = NULL;
+    _image = image;
+}
+
+BinImage *BinHeader::get_image(void)
+{
+    return _image;
 }
