@@ -10,6 +10,8 @@ public:
 
 private:
     int _size;
+    int _width;
+    int _height;
     char *_data;
 };
 
