@@ -122,7 +122,7 @@ void BinFile::_parse_header(void)
         }
 
         // get data
-        char *data = new char[length];
+        char data[length];
         int g = _file.tellg();
         _file.seekg(offset, ios::beg);
         _file.read(data, length);

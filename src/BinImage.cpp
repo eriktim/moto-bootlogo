@@ -7,7 +7,8 @@
 
 BinImage::BinImage(char *data, size_t size)
 {
-    _data = data;
+    _data = new char[size];
+    memcpy(_data, data, size);
     _size = size;
 }
 
