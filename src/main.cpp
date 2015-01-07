@@ -17,8 +17,13 @@ int main(int argc, const char *argv[]) {
     }
     string filename = argv[1];
     BinFile *file = new BinFile(filename);
-    list<BinImage> images = file->get_images();
+    vector<BinImage*> images = file->get_images();
     int size = images.size();
     cout << "Found " << size << " image" << (size == 1 ? "" : "s") << "." << endl;
+    for (vector<BinImage*>::const_iterator it = images.begin(),
+            end = images.end(); it != end; it++) {
+        BinImage *image = *it;
+        image->create_png();
+    }
     return 0;
 }

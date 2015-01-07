@@ -19,17 +19,17 @@ BinFile::~BinFile()
     }
 }
 
-list<BinImage> BinFile::get_images(void)
+vector<BinImage*> BinFile::get_images(void)
 {
     if (_count < 0) {
         _parse_header();
     }
-    list<BinImage> images;
-    for (list<BinHeader>::const_iterator it = _headers.begin(),
+    vector<BinImage*> images;
+    for (vector<BinHeader*>::const_iterator it = _headers.begin(),
             end = _headers.end(); it != end; it++) {
-        BinHeader header = *it;
-        BinImage *image = header.get_image();
-        images.push_back(image[0]);
+        BinHeader *header = *it;
+        BinImage *image = header->get_image();
+        images.push_back(image);
     }
     return images;
 }
@@ -44,10 +44,10 @@ void BinFile::reset_unlocked_logo(void)
 
 }
 
-unsigned int BinFile::_read_value(void) {
+size_t BinFile::_read_value(void) {
     char bytes[4];
     _file.read(bytes, 4);
-    unsigned int value = 0;
+    size_t value = 0;
     for (int i=3; i>=0; i--) {
         value += pow(256, i) * (uint8_t)bytes[i];
     }
@@ -108,8 +108,8 @@ void BinFile::_parse_header(void)
         string tag(bytes);
 
         // read offset and length
-        unsigned int offset = _read_value();
-        unsigned int length = _read_value();
+        size_t offset = _read_value();
+        size_t length = _read_value();
 
         // print results
         cout << "Header logo: '" << tag << "', starts at byte " << offset
@@ -122,15 +122,15 @@ void BinFile::_parse_header(void)
         }
 
         // get data
-        char data[length];
+        char *data = new char[length];
         int g = _file.tellg();
         _file.seekg(offset, ios::beg);
         _file.read(data, length);
         _file.seekg(g, ios::beg);
 
         // create objects
-        BinImage image(data, length);
-        BinHeader header(offset, length, &image);
+        BinImage *image = new BinImage(data, length);
+        BinHeader *header = new BinHeader(offset, length, image);
 
         // keep a reference to the image header
         _headers.push_back(header);

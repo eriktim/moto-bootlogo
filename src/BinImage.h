@@ -6,12 +6,14 @@ using namespace std;
 class BinImage
 {
 public:
-    BinImage(char *data, int size);
+    BinImage(char *data, size_t size);
+    ~BinImage();
+    void create_png(void);
 
 private:
-    int _size;
-    int _width;
-    int _height;
+    size_t _size;
+    size_t _width;
+    size_t _height;
     char *_data;
 };
 
