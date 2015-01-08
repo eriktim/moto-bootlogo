@@ -17,13 +17,16 @@ int main(int argc, const char *argv[]) {
     }
     string filename = argv[1];
     BinFile *file = new BinFile(filename);
-    vector<BinImage*> images = file->get_images();
-    int size = images.size();
+    map<string, BinHeader*> headers = file->get_headers();
+    int size = headers.size();
     cout << "Found " << size << " image" << (size == 1 ? "" : "s") << "." << endl;
-    for (vector<BinImage*>::const_iterator it = images.begin(),
-            end = images.end(); it != end; it++) {
-        BinImage *image = *it;
-        image->create_png();
+    for (map<string, BinHeader*>::const_iterator it = headers.begin(),
+            end = headers.end(); it != end; ++it) {
+        string tag = it->first;
+        BinHeader *header = it->second;
+        BinImage *image = header->get_image();
+        image->create_png(tag.append(".png"));
     }
+    delete file; // FIXME
     return 0;
 }

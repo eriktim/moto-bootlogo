@@ -9,7 +9,10 @@ BinHeader::BinHeader(int offset, int size, BinImage *image)
 
 BinHeader::~BinHeader()
 {
-    delete _image;
+    if (_image) {
+        delete _image;
+        _image = NULL;
+    }
 }
 
 BinImage *BinHeader::get_image(void)

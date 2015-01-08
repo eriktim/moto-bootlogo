@@ -1,6 +1,8 @@
 #ifndef BINIMAGE_H
 #define BINIMAGE_H
 
+#include <stdint.h>
+
 using namespace std;
 
 class BinImage
@@ -8,7 +10,7 @@ class BinImage
 public:
     BinImage(char *data, size_t size);
     ~BinImage();
-    void create_png(void);
+    void create_png(string filename);
 
 private:
     void _decode(void);
@@ -17,7 +19,7 @@ private:
     size_t _size;
     size_t _width;
     size_t _height;
-    char *_data;
+    uint8_t *_data;
     size_t _g;
     FILE *_raw;
 };

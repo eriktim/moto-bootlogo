@@ -1,5 +1,4 @@
 #include <iostream>
-#include <math.h>
 #include <sstream>
 #include <stdint.h>
 #include <string.h>
@@ -17,26 +16,19 @@ BinFile::~BinFile()
     if (_file.is_open()) {
         _file.close();
     }
-    for (vector<BinHeader*>::const_iterator it = _headers.begin(),
+    for (map<string, BinHeader*>::const_iterator it = _headers.begin(),
             end = _headers.end(); it != end; it++) {
-        BinHeader *header = *it;
+        BinHeader *header = it->second;
         delete header;
     }
 }
 
-vector<BinImage*> BinFile::get_images(void)
+map<string, BinHeader*> BinFile::get_headers(void)
 {
     if (_count < 0) {
         _parse_header();
     }
-    vector<BinImage*> images;
-    for (vector<BinHeader*>::const_iterator it = _headers.begin(),
-            end = _headers.end(); it != end; it++) {
-        BinHeader *header = *it;
-        BinImage *image = header->get_image();
-        images.push_back(image);
-    }
-    return images;
+    return _headers;
 }
 
 void BinFile::replace_image(string type, string filename)
@@ -54,7 +46,7 @@ size_t BinFile::_read_value(void) {
     _file.read(bytes, 4);
     size_t value = 0;
     for (int i=3; i>=0; i--) {
-        value += pow(256, i) * (uint8_t)bytes[i];
+        value += (uint8_t)bytes[i] << 8 * i;
     }
     return value;
 }
@@ -138,7 +130,9 @@ void BinFile::_parse_header(void)
         BinHeader *header = new BinHeader(offset, length, image);
 
         // keep a reference to the image header
-        _headers.push_back(header);
+        _headers.insert(pair<string, BinHeader*>(tag, header));
     }
+
+    _count = _headers.size();
 
 }

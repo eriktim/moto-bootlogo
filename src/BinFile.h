@@ -2,7 +2,7 @@
 #define BINFILE_H
 
 #include <fstream>
-#include <vector>
+#include <map>
 #include <string>
 
 #include "BinHeader.h"
@@ -17,7 +17,7 @@ class BinFile
 public:
     BinFile(string filename);
     ~BinFile();
-    vector<BinImage*> get_images(void);
+    map<string, BinHeader*> get_headers(void);
     void replace_image(string type, string filename);
     void reset_unlocked_logo(void);
 
@@ -27,7 +27,7 @@ private:
 
     string _filename;
     fstream _file;
-    vector<BinHeader*> _headers;
+    map<string, BinHeader*> _headers;
     int _count;
 };
 

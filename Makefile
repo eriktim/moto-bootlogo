@@ -2,7 +2,7 @@ OBJS = build/main.o build/BinFile.o build/BinHeader.o build/BinImage.o
 CC = g++
 DEBUG = -g
 CFLAGS = -Wall -c $(DEBUG)
-LFLAGS = -Wall $(DEBUG)
+LFLAGS = -Wall $(DEBUG) -lpng
 
 
 all: build
