@@ -12,6 +12,7 @@ class BinHeader
 {
 public:
     BinHeader(int offset, int size, BinImage *image);
+    ~BinHeader();
     BinImage *get_image(void);
 
 private:

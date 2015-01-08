@@ -17,6 +17,11 @@ BinFile::~BinFile()
     if (_file.is_open()) {
         _file.close();
     }
+    for (vector<BinHeader*>::const_iterator it = _headers.begin(),
+            end = _headers.end(); it != end; it++) {
+        BinHeader *header = *it;
+        delete header;
+    }
 }
 
 vector<BinImage*> BinFile::get_images(void)
