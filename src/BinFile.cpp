@@ -23,6 +23,50 @@ BinFile::~BinFile()
     }
 }
 
+bool BinFile::copy_image_header(string fromTag, string toTag)
+{
+    if (_count < 0) {
+        _parse_header();
+    }
+
+    BinHeader *from = _headers[fromTag];
+    if (!from) {
+        cerr << "Image header not found: " << fromTag << endl;
+        return false;
+    }
+
+    BinHeader *to = _headers[toTag];
+    if (!to) {
+        cerr << "Image header not found: " << toTag << endl;
+        return false;
+    }
+
+    size_t offset = from->get_offset();
+    size_t length = from->get_size();
+    size_t g = to->get_g();
+
+    _file.close();
+    _file.open(_filename.c_str(), ios::in|ios::out|ios::binary);
+    _file.seekg(g + 24, ios::beg);
+
+    // convert offset|length to binary
+    char data[8];
+    for (int i = 0; i < 4; ++i) {
+        data[i] = (offset >> 8 * i) & 0xff;
+    }
+    for (int i = 0; i < 4; ++i) {
+        data[4 + i] = (length >> 8 * i) & 0xff;
+    }
+
+    // update image header
+    _file.write(data, 8);
+
+    // file should be re-parsed
+    _count = -1;
+
+    return true;
+}
+
 map<string, BinHeader*> BinFile::get_headers(void)
 {
     if (_count < 0) {
@@ -32,11 +76,6 @@ map<string, BinHeader*> BinFile::get_headers(void)
 }
 
 void BinFile::replace_image(string type, string filename)
-{
-
-}
-
-void BinFile::reset_unlocked_logo(void)
 {
 
 }
@@ -64,6 +103,8 @@ size_t BinFile::_read_value(void) {
  */
 void BinFile::_parse_header(void)
 {
+    _headers.clear();
+
     if (_file.is_open()) {
         _file.close();
     }
@@ -127,7 +168,7 @@ void BinFile::_parse_header(void)
 
         // create objects
         BinImage *image = new BinImage(data, length);
-        BinHeader *header = new BinHeader(offset, length, image);
+        BinHeader *header = new BinHeader(offset, length, g - 32, image);
 
         // keep a reference to the image header
         _headers.insert(pair<string, BinHeader*>(tag, header));

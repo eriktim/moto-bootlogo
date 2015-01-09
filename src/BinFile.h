@@ -17,6 +17,7 @@ class BinFile
 public:
     BinFile(string filename);
     ~BinFile();
+    bool copy_image_header(string fromTag, string toTag);
     map<string, BinHeader*> get_headers(void);
     void replace_image(string type, string filename);
     void reset_unlocked_logo(void);
