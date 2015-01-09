@@ -21,7 +21,7 @@ private:
     size_t _height;
     uint8_t *_data;
     size_t _g;
-    FILE *_raw;
+    uint8_t *_raw;
 };
 
 #endif

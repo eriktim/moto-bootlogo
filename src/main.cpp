@@ -27,6 +27,6 @@ int main(int argc, const char *argv[]) {
         BinImage *image = header->get_image();
         image->create_png(tag.append(".png"));
     }
-    delete file; // FIXME
+    delete file;
     return 0;
 }

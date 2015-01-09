@@ -26,7 +26,7 @@ BinImage::~BinImage()
     delete[] _data;
     _data = NULL;
     if (_raw) {
-        delete _raw;
+        delete[] _raw;
         _raw = NULL;
     }
 }
@@ -92,12 +92,9 @@ void BinImage::create_png(string filename)
             PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
     // write data
-    fseek(_raw, 0, SEEK_SET);
-    png_byte buffer[3 * _width * _height];
-    fread(buffer, sizeof(png_byte), 3 * _width * _height, _raw);
     png_byte *pngRows[_height];
     for (size_t k = 0; k < _height; k++) {
-        pngRows[k] = &buffer[k * _width * 3];
+        pngRows[k] = &_raw[k * _width * 3];
     }
     png_set_rows(pngStruct, pngInfo, pngRows);
     png_write_png(pngStruct, pngInfo, PNG_TRANSFORM_BGR, NULL);
@@ -105,12 +102,15 @@ void BinImage::create_png(string filename)
     // cleanup
     png_destroy_write_struct(&pngStruct, &pngInfo);
     fclose(fp);
-    delete _raw;
+    delete[] _raw;
+    _raw = NULL;
 }
 
 void BinImage::_decode(void)
 {
-    _raw = tmpfile();
+    _raw = new uint8_t[3 * _width * _height];
+    size_t g = 0;
+
     while (_g < _size) {
         uint8_t byte = _data[_g++];
         if ((byte & 0x70) > 0) {
@@ -128,8 +128,9 @@ void BinImage::_decode(void)
             // 0x0L LL R1 G1 B1 R2 G2 B2 R3 G3 B3 ...
             bool repeat = byte >> 7;
 
-            for (uint16_t i = 0; i < runlength; i++) {
-                fwrite(&_data[_g], sizeof(uint8_t), 3, _raw);
+            for (uint16_t i = 0; i < runlength; ++i) {
+                memcpy(&_raw[g], &_data[_g], 3);
+                g += 3;
                 if (!repeat) {
                     _g += 3;
                 }
@@ -139,11 +140,10 @@ void BinImage::_decode(void)
             }
         }
     }
-    fflush(_raw);
 
     if (_g != _size) {
         cerr << "Incorrect file size (" << _g << "/" << _size << ")" << endl;
-        delete _raw;
+        delete[] _raw;
         _raw = NULL;
     }
 }
