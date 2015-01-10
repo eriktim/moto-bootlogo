@@ -11,9 +11,11 @@ public:
     BinImage(char *data, size_t size);
     ~BinImage();
     void create_png(string filename);
+    bool set_data_from_png(string filename);
 
 private:
     void _decode(void);
+    void _encode(void);
     size_t _read_dimension(void);
 
     size_t _size;

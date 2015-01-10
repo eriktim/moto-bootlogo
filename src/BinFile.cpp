@@ -60,6 +60,7 @@ bool BinFile::copy_image_header(string fromTag, string toTag)
 
     // update image header
     _file.write(data, 8);
+    _file.close();
 
     // file should be re-parsed
     _count = -1;
@@ -75,9 +76,30 @@ map<string, BinHeader*> BinFile::get_headers(void)
     return _headers;
 }
 
-void BinFile::replace_image(string type, string filename)
+bool BinFile::replace_image(string tag, string filename)
 {
+    if (_count < 0) {
+        _parse_header();
+    }
 
+    // find header with tag
+    BinHeader *header = _headers[tag];
+    if (!header) {
+        cerr << "Image header not found: " << tag << endl;
+        return false;
+    }
+
+    // replace the data in the BinImage
+    BinImage *image = header->get_image();
+    if (!image->set_data_from_png(filename)) {
+        cerr << "Failed reading image data from '" << filename << "'" << endl;
+        return false;
+    }
+
+    // file should be re-parsed
+    _count = -1;
+
+    return true;
 }
 
 size_t BinFile::_read_value(void) {

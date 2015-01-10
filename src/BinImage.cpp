@@ -16,25 +16,11 @@ BinImage::BinImage(char *data, size_t size)
         cerr << "Could not find valid image data" << endl;
         return;
     }
+    _g = 8; // 'MotoRun '
+
     _data = new uint8_t[size];
     memcpy(_data, data, size);
     _size = size;
-}
-
-BinImage::~BinImage()
-{
-    delete[] _data;
-    _data = NULL;
-    if (_raw) {
-        delete[] _raw;
-        _raw = NULL;
-    }
-}
-
-void BinImage::create_png(string filename)
-{
-    // skip 8 bytes (MotoRun )
-    _g = 8;
 
     // read image dimensions
     _width = _read_dimension();
@@ -44,6 +30,22 @@ void BinImage::create_png(string filename)
         cerr << "Could not determine image size" << endl;
         return;
     }
+}
+
+BinImage::~BinImage()
+{
+    if (_data) {
+        delete[] _data;
+        _data = NULL;
+    }
+    if (_raw) {
+        delete[] _raw;
+        _raw = NULL;
+    }
+}
+
+void BinImage::create_png(string filename)
+{
     cout << "Image size: " << _width << " x " << _height << endl;
 
     _decode();
@@ -104,6 +106,127 @@ void BinImage::create_png(string filename)
     fclose(fp);
     delete[] _raw;
     _raw = NULL;
+}
+
+bool BinImage::set_data_from_png(string filename)
+{
+    // try opening the file
+    FILE *fp = fopen(filename.c_str(), "rb");
+    if (!fp) {
+        cerr << "Failed opening '" << filename << "'" << endl;
+        return false;
+    }
+
+    // validate header
+    png_byte header[8];
+    fread(header, 1, 8, fp);
+    if (png_sig_cmp(header, 0, 8)) {
+        cerr << "[PNG] '" << filename
+                << "' is not recognized as a PNG file" << endl;
+        fclose(fp);
+        return false;
+    }
+
+    // allocate & initialize PNG struct
+    png_structp pngStruct = png_create_read_struct
+            (PNG_LIBPNG_VER_STRING, (png_voidp)NULL, NULL, NULL);
+    if (!pngStruct) {
+        cerr << "[PNG] Failed creating structure" << endl;
+        fclose(fp);
+        return false;
+    }
+
+    // allocate & initialize PNG info
+    png_infop pngInfo = png_create_info_struct(pngStruct);
+    if (!pngInfo) {
+        cerr << "[PNG] Failed creating info" << endl;
+        png_destroy_write_struct(&pngStruct, (png_infopp)NULL);
+        fclose(fp);
+        return false;
+    }
+
+    // set-up error handling
+    if (setjmp(png_jmpbuf(pngStruct))) {
+        cerr << "[PNG] Failed reading file" << endl;
+        png_destroy_write_struct(&pngStruct, &pngInfo);
+        fclose(fp);
+        return false;
+    }
+
+    // initialize input
+    png_init_io(pngStruct, fp);
+
+    // inform the library 8 bytes have been read
+    png_set_sig_bytes(pngStruct, 8);
+
+    // read up to image data, as we need to verify the info first
+    png_read_info(pngStruct, pngInfo);
+
+    // check whether the PNG specifications are met
+    bool unsupported = false;
+    long unsigned int width, height;
+    int depth, type, interlaceType, compressionType, filterMethod;
+
+    png_get_IHDR(pngStruct, pngInfo, &width, &height,
+            &depth, &type, &interlaceType, &compressionType, &filterMethod);
+
+    if (width != _width || height != _height) {
+        cerr << "PNG dimensions do not match the original image" << endl;
+        unsupported = true;
+    }
+
+    if (depth != 8) {
+        cerr << "PNG depth should be 8" << endl;
+        unsupported = true;
+    }
+
+    switch (type) {
+        case PNG_COLOR_TYPE_RGB_ALPHA:
+            png_set_strip_alpha(pngStruct);
+            // do not break
+        case PNG_COLOR_TYPE_RGB:
+            png_set_bgr(pngStruct);
+            break;
+        default:
+            cerr << "PNG type should be 'RGB'" << endl;
+            unsupported = true;
+    }
+
+    if (interlaceType != PNG_INTERLACE_NONE) {
+        cerr << "PNG should not be interlaced" << endl;
+        unsupported = true;
+    }
+
+    if (compressionType != PNG_COMPRESSION_TYPE_BASE) {
+        cerr << "PNG should have base compression" << endl;
+        unsupported = true;
+    }
+
+    if (filterMethod != PNG_FILTER_TYPE_BASE) {
+        cerr << "PNG should have base filtering" << endl;
+        unsupported = true;
+    }
+
+    if (unsupported) {
+        return false;
+    }
+
+    // update info with transformations
+    png_read_update_info(pngStruct, pngInfo);
+
+    // read the data from the PNG
+    _raw = new uint8_t[3 * width * height];
+    png_bytep pngRows[height];
+    for (long unsigned int i = 0; i < height; ++i) {
+        pngRows[i] = &_raw[i * 3 * width];
+    }
+    png_read_image(pngStruct, pngRows);
+
+    // cleanup
+    png_destroy_read_struct(&pngStruct, &pngInfo, NULL);
+    fclose(fp);
+
+    return true;
 }
 
 void BinImage::_decode(void)

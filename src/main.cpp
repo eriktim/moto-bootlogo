@@ -65,27 +65,33 @@ int main(int argc, char *argv[]) {
      }
 
     // create BinFile
-    BinFile *file = new BinFile(filename);
+    BinFile *bin = new BinFile(filename);
 
     if (fixup) {
         // first insert the PNG as this changes the header
         if (!png.empty()) {
-            cout << "Converting PNG" << endl; // TODO
+            if (!bin->replace_image("logo_boot", png)) {
+                cerr << "Failed replacing boot logo with '"
+                        << png << "'" << endl;
+                delete bin;
+                return 1;
+            }
         }
 
         // reset boot logo
-        if (!file->copy_image_header("logo_boot", "logo_unlocked")) {
+        if (!bin->copy_image_header("logo_boot", "logo_unlocked")) {
             cerr << "Failed fixing boot logo" << endl;
-            delete file;
+            delete bin;
             return 1;
         }
 
     }
 
     // parse (and thus verify) BinFile
-    map<string, BinHeader*> headers = file->get_headers();
+    map<string, BinHeader*> headers = bin->get_headers();
     int size = headers.size();
-    cout << "Found " << size << " image" << (size == 1 ? "" : "s") << "." << endl;
+    cout << "Found " << size << " image"
+            << (size == 1 ? "" : "s") << "." << endl;
 
     // create PNG images
     for (map<string, BinHeader*>::const_iterator it = headers.begin(),
@@ -97,6 +103,6 @@ int main(int argc, char *argv[]) {
     }
 
     // exit
-    delete file;
+    delete bin;
     return 0;
 }
