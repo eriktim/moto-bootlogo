@@ -109,6 +109,16 @@ void BinImage::create_png(string filename)
     _raw = NULL;
 }
 
+uint8_t *BinImage::get_data(void)
+{
+    return _data;
+}
+
+size_t BinImage::get_size(void)
+{
+    return _size;
+}
+
 bool BinImage::set_data_from_png(string filename)
 {
     // try opening the file
@@ -307,7 +317,7 @@ bool BinImage::_encode(void)
 
     for (size_t i = 0, L, length; i < _width * _height; i += length) {
         length = _block_length(true, i);
-        if (length >= 2) {
+        if (length > 1) {
             mode = 0x8;
             L = 1;
         } else {

@@ -11,6 +11,8 @@ public:
     BinImage(char *data, size_t size);
     ~BinImage();
     void create_png(string filename);
+    uint8_t *get_data(void);
+    size_t get_size(void);
     bool set_data_from_png(string filename);
 
 private:

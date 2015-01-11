@@ -96,6 +96,31 @@ bool BinFile::replace_image(string tag, string filename)
         return false;
     }
 
+    if (_file.is_open()) {
+        _file.close();
+    }
+    _file.open(_filename.c_str(), ios::in|ios::out|ios::binary);
+    if (_file.fail()) {
+        cerr << "Failed opening '" << _file << "' for writing" << endl;
+        return false;
+    }
+
+    size_t length = image->get_size();
+
+    size_t gHeader = header->get_g();
+    char size[2];
+    size[0] = (length >> 8) & 0xff;
+    size[1] = length & 0xff;
+
+    _file.seekg(gHeader + 24 + 4, ios::beg);
+    _file.write(size, 2);
+
+    size_t gImage = header->get_offset();
+    char *data = (char *)image->get_data();
+
+    _file.seekg(gImage + 8 + 4, ios::beg);
+    _file.write(data, length);
+
     // file should be re-parsed
     _count = -1;
 
