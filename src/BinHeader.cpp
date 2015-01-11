@@ -35,3 +35,8 @@ size_t BinHeader::get_size(void)
 {
     return _size;
 }
+
+void BinHeader::update_size(void)
+{
+    _size = _image->get_size();
+}

@@ -17,6 +17,7 @@ public:
     size_t get_g(void);
     size_t get_offset(void);
     size_t get_size(void);
+    void update_size(void);
 
 private:
     size_t _g;

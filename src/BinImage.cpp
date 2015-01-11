@@ -244,20 +244,29 @@ size_t BinImage::_block_length(bool repeat, size_t g)
 {
     size_t max = _width - (g % _width);
     size_t l;
+    bool warning;
     for (l = 1; l < max; ++l) {
         size_t j = 3 * (g + l);
         bool equal = true;
         for (size_t k = 0; k < 3; ++k) {
-            if (_raw[j + k] != _raw[j + k - 3]) {
+            if (_raw[j + k] != _raw[j + 3 + k]) {
                 equal = false;
             }
         }
         if (equal) {
             if (!repeat) {
-                return l;
+                if (warning) {
+                    return l - 2;
+                } else {
+                    warning = true;
+                }
             }
-        } else if (repeat) {
-            return l;
+        } else {
+            if (repeat) {
+                return l;
+            } else {
+                warning = false;
+            }
         }
     }
     return l;
@@ -272,7 +281,8 @@ void BinImage::_decode(void)
         uint8_t byte = _data[_g++];
         if ((byte & 0x70) > 0) {
             // should not be reached
-            cerr << "Unexpected run-length value: " << (int)byte << endl;
+            cerr << "Invalid nybble (" << (int)byte
+                    << ") at position " << _g << endl;
         } else {
             uint16_t runlength = 0;
             runlength += (byte & 0x0f) << 8;
@@ -312,22 +322,30 @@ bool BinImage::_encode(void)
         return false;
     }
 
-    vector<uint8_t> data;
+    string prefix("MotoRun");
+    vector<uint8_t> data(prefix.begin(), prefix.end());
+    data.push_back(0x00);
+    data.push_back((_width >> 8) & 0xff);
+    data.push_back(_width & 0xff);
+    data.push_back((_height >> 8) & 0xff);
+    data.push_back(_height & 0xff);
     uint8_t mode;
 
     for (size_t i = 0, L, length; i < _width * _height; i += length) {
         length = _block_length(true, i);
-        if (length > 1) {
-            mode = 0x8;
+        if (length >= 3) {
+            mode = 0x80;
             L = 1;
         } else {
             length = _block_length(false, i);
-            mode = 0x0;
+            mode = 0x00;
             L = length;
         }
-        data.push_back(mode + ((length >> 8) & 0x7));
+        uint8_t nybble = (length >> 8) & 0x0f;
+        data.push_back(mode | nybble);
         data.push_back(length & 0xff);
-        for (size_t l = 0, j; l < L; ++l) {
+
+        for (size_t l = 1, j; l <= L; ++l) {
             j = 3 * (i + l);
             data.push_back(_raw[j + 0]);
             data.push_back(_raw[j + 1]);
@@ -340,10 +358,7 @@ bool BinImage::_encode(void)
         delete[] _data;
     }
     _size = data.size();
-    _data = new uint8_t[_size];
-    for (size_t i = 0; i < _size; ++i) {
-        _data[i] = data[i];
-    }
+    _data = &data[0];
 
     return true;
 }

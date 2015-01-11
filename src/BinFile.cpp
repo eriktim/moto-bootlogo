@@ -106,19 +106,28 @@ bool BinFile::replace_image(string tag, string filename)
     }
 
     size_t length = image->get_size();
+    if (length > header->get_size()) {
+        cerr << "Resulting image is too large ("
+            << length << " of " << header->get_size() << " bytes)" << endl;
+        return false;
+    }
+
+    header->update_size();
 
     size_t gHeader = header->get_g();
-    char size[2];
-    size[0] = (length >> 8) & 0xff;
-    size[1] = length & 0xff;
+    char size[4];
+    size[0] = length & 0xff;
+    size[1] = (length >> 8) & 0xff;
+    size[2] = (length >> 16) & 0xff;
+    size[3] = (length >> 24) & 0xff;
 
     _file.seekg(gHeader + 24 + 4, ios::beg);
-    _file.write(size, 2);
+    _file.write(size, 4);
 
     size_t gImage = header->get_offset();
     char *data = (char *)image->get_data();
 
-    _file.seekg(gImage + 8 + 4, ios::beg);
+    _file.seekg(gImage, ios::beg);
     _file.write(data, length);
 
     // file should be re-parsed
