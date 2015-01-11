@@ -14,8 +14,9 @@ public:
     bool set_data_from_png(string filename);
 
 private:
+    size_t _block_length(bool repeat, size_t g);
     void _decode(void);
-    void _encode(void);
+    bool _encode(void);
     size_t _read_dimension(void);
 
     size_t _size;

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
+#include <vector>
 
 #include "BinImage.h"
 
@@ -226,7 +227,30 @@ bool BinImage::set_data_from_png(string filename)
     png_destroy_read_struct(&pngStruct, &pngInfo, NULL);
     fclose(fp);
 
-    return true;
+    return _encode();
+}
+
+size_t BinImage::_block_length(bool repeat, size_t g)
+{
+    size_t max = _width - (g % _width);
+    size_t l;
+    for (l = 1; l < max; ++l) {
+        size_t j = 3 * (g + l);
+        bool equal = true;
+        for (size_t k = 0; k < 3; ++k) {
+            if (_raw[j + k] != _raw[j + k - 3]) {
+                equal = false;
+            }
+        }
+        if (equal) {
+            if (!repeat) {
+                return l;
+            }
+        } else if (repeat) {
+            return l;
+        }
+    }
+    return l;
 }
 
 void BinImage::_decode(void)
@@ -271,13 +295,56 @@ void BinImage::_decode(void)
     }
 }
 
+bool BinImage::_encode(void)
+{
+    if (!_raw) {
+        cerr << "No data to encode" << endl;
+        return false;
+    }
+
+    vector<uint8_t> data;
+    uint8_t mode;
+
+    for (size_t i = 0, L, length; i < _width * _height; i += length) {
+        length = _block_length(true, i);
+        if (length >= 2) {
+            mode = 0x8;
+            L = 1;
+        } else {
+            length = _block_length(false, i);
+            mode = 0x0;
+            L = length;
+        }
+        data.push_back(mode + ((length >> 8) & 0x7));
+        data.push_back(length & 0xff);
+        for (size_t l = 0, j; l < L; ++l) {
+            j = 3 * (i + l);
+            data.push_back(_raw[j + 0]);
+            data.push_back(_raw[j + 1]);
+            data.push_back(_raw[j + 2]);
+        }
+    }
+
+    cout << "Encoded size: " << data.size() << " bytes" << endl;
+    if (_data) {
+        delete[] _data;
+    }
+    _size = data.size();
+    _data = new uint8_t[_size];
+    for (size_t i = 0; i < _size; ++i) {
+        _data[i] = data[i];
+    }
+
+    return true;
+}
+
 size_t BinImage::_read_dimension(void)
 {
     uint8_t bytes[2];
     bytes[0] = _data[_g++];
     bytes[1] = _data[_g++];
     uint16_t value = 0;
-    for (int i=0; i<2; i++) {
+    for (int i = 0; i < 2; ++i) {
         value += bytes[i] << 8 * (1 - i);
     }
     return value;
