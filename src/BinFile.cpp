@@ -101,7 +101,7 @@ bool BinFile::replace_image(string tag, string filename)
     }
     _file.open(_filename.c_str(), ios::in|ios::out|ios::binary);
     if (_file.fail()) {
-        cerr << "Failed opening '" << _file << "' for writing" << endl;
+        cerr << "Failed opening '" << _filename.c_str() << "' for writing" << endl;
         return false;
     }
 
