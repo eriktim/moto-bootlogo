@@ -175,7 +175,7 @@ bool BinImage::set_data_from_png(string filename)
 
     // check whether the PNG specifications are met
     bool unsupported = false;
-    long unsigned int width, height;
+    unsigned int width, height;
     int depth, type, interlaceType, compressionType, filterMethod;
 
     png_get_IHDR(pngStruct, pngInfo, &width, &height,
