@@ -186,7 +186,7 @@ void BinFile::_parse_header(void)
 
     // next byte contains the header size
     _file.read(bytes, 2);
-    uint8_t size = (uint8_t)bytes[0];
+    uint16_t size = (uint8_t)bytes[0] + ((uint8_t)bytes[1] << 8);
     if (_file.fail() || !size) {
         cerr << "Header is empty" << endl;
         return;
