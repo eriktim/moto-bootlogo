@@ -8,7 +8,7 @@ LFLAGS = -Wall $(DEBUG) -lpng
 all: build
 
 build: $(OBJS)
-	$(CC) $(LFLAGS) $(OBJS) -o build/moto-bootlogo
+	$(CC) $(OBJS) -o build/moto-bootlogo $(LFLAGS)
 
 build/main.o: src/main.cpp
 	$(CC) $(CFLAGS) -o build/main.o src/main.cpp
